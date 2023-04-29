@@ -1,0 +1,23 @@
+DROP TABLE IF EXISTS bets;
+
+CREATE TABLE bets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    bettor TEXT NOT NULL,
+    horse TEXT NOT NULL,
+    amount INTEGER NOT NULL
+);
+
+DROP TABLE IF EXISTS horses;
+
+CREATE TABLE horses (
+    number INTEGER,
+    horse TEXT NOT NULL
+);
+
+DROP TABLE IF EXISTS odds;
+
+CREATE TABLE odds (
+    horse TEXT NOT NULL,
+    odds FLOAT NOT NULL
+);

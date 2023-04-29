@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>{% block title %} Bets by Person {% endblock %}</h1>
+    <table class="table table-striped table-bordered table-hover">
+        <thead class="thead-dark">
+            <tr>
+                <th>Name</th>
+                <th>Horse</th>
+                <th>Amount</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bet in bets %}
+            <tr>
+                <td>{{ bet["bettor"]}}</td>
+                <td>{{ bet["horse"] }}</td>
+                <td>{{ bet["amount"] }}</td>
+                <td>{{ bet["created"] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+{% endblock %}

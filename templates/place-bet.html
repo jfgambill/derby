@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Place a Bet</h2>
+    <form action="{{ url_for('place_bet') }}" method="POST">
+        <div class="form-group">
+            <label for="name">Name:</label>
+            <select class="form-control" name="name">
+                <option selected disabled>Select a Name</option>
+                {% for name in names %}
+                    <option value="{{ name }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="horse">Horse:</label>
+            <select class="form-control" name="horse">
+                {% for horse in odds %}
+                    <option value="{{ horse['horse'] }}">{{ horse['horse'] }} ({{ horse['odds'] }} to 1)</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="bet_amount">Bet Amount:</label>
+            <input type="number" class="form-control" name="bet_amount">
+        </div>
+        <button type="submit" class="btn btn-primary" id="place-bet-button">Place Bet</button>
+    </form>
+
+    <!-- Confirmation screen -->
+    <div id="confirmation-screen" style="display: none;">
+        <h2>Confirm Your Bet</h2>
+        <p>You are about to place the following bet:</p>
+        <p>Name: <span id="confirmation-name"></span></p>
+        <p>Horse: <span id="confirmation-horse"></span></p>
+        <p>Bet Amount: $<span id="confirmation-amount"></span></p>
+        <button type="button" class="btn btn-success" id="confirm-button">Confirm</button>
+        <button type="button" class="btn btn-danger" id="cancel-button">Cancel</button>
+    </div>
+
+    <script>
+        // Get form elements and confirmation screen
+        const form = document.querySelector('form');
+        const placeBetButton = document.querySelector('#place-bet-button');
+        const confirmationScreen = document.querySelector('#confirmation-screen');
+        const confirmButton = document.querySelector('#confirm-button');
+        const cancelButton = document.querySelector('#cancel-button');
+        const confirmationName = document.querySelector('#confirmation-name');
+        const confirmationHorse = document.querySelector('#confirmation-horse');
+        const confirmationAmount = document.querySelector('#confirmation-amount');
+
+        // Add event listener to form submit button
+        placeBetButton.addEventListener('click', function(event) {
+            event.preventDefault();
+
+            // Get form data
+            const name = form.elements['name'].value;
+            const horse = form.elements['horse'].value;
+            const amount = form.elements['bet_amount'].value;
+
+            // Set confirmation screen data
+            confirmationName.textContent = name;
+            confirmationHorse.textContent = horse;
+            confirmationAmount.textContent = amount;
+
+            // Show confirmation screen
+            confirmationScreen.style.display = 'block';
+        });
+
+        // Add event listener to confirm button
+        confirmButton.addEventListener('click', function() {
+            form.submit();
+        });
+
+        // Add event listener to cancel button
+        cancelButton.addEventListener('click', function() {
+            confirmationScreen.style.display = 'none';
+        });
+    </script>
+{% endblock %}
