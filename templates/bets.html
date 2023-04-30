@@ -1,27 +1,38 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1>{% block title %} Bets by Person {% endblock %}</h1>
-    <table class="table table-striped table-bordered table-hover">
-        <thead class="thead-dark">
-            <tr>
-                <th>Name</th>
-                <th>Horse</th>
-                <th>Amount</th>
-                <th>Created</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for bet in bets %}
-            <tr>
-                <td>{{ bet["bettor"]}}</td>
-                <td>{{ bet["horse"] }}</td>
-                <td>{{ bet["amount"] }}</td>
-                <td>{{ bet["created"] }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <h1>Bets by Person</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Select a Name:</label>
+            <select class="form-control" id="name" name="name">
+                {% for name in names %}
+                    <option value="{{ name }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
 
-
+    {% if bets %}
+        <h2>{{ selected_name }}'s Bets:</h2>
+        <table class="table table-striped table-bordered table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Horse</th>
+                    <th>Amount</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bet in bets %}
+                    <tr>
+                        <td>{{ bet.horse }}</td>
+                        <td>{{ bet.amount }}</td>
+                        <td>{{ bet.created }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
 {% endblock %}

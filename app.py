@@ -15,7 +15,8 @@ def load_odds_table():
     odds = conn.execute("""SELECT b.number, a.horse, a.odds 
                         FROM odds a
                         INNER JOIN horses b 
-                        ON a.horse = b.horse """).fetchall()
+                        ON a.horse = b.horse 
+                        ORDER BY odds """).fetchall()
     conn.close()
     return odds
 
@@ -39,7 +40,8 @@ def update_odds():
 
     for horse, bet_sum in sums:
         odds = round(total / bet_sum, 2)
-        conn.execute("INSERT INTO odds (horse, odds) VALUES (?, ?)",
+        conn.execute("""INSERT INTO odds (horse, odds) VALUES (?, ?) 
+                    ON CONFLICT (horse) DO UPDATE SET odds = EXCLUDED.odds;""",
                     (horse, odds)
                     )
     conn.commit()
@@ -51,11 +53,14 @@ def load_horses():
     conn.close()
     return horses
 
-def load_bets():
+def load_bets(person=None):
     conn = get_db_connection()
-    posts = conn.execute('SELECT * FROM bets').fetchall()
+    if person is not None:
+        bets = conn.execute(f"SELECT * FROM bets WHERE bettor = '{person}'").fetchall()
+    else:
+        bets = conn.execute('SELECT * FROM bets').fetchall()
     conn.close()
-    return posts
+    return bets
 
 def save_bet(bettor, horse, amount):
     conn = get_db_connection()
@@ -65,19 +70,38 @@ def save_bet(bettor, horse, amount):
     conn.commit()
     conn.close()
 
+def calc_payouts(winner):
+    conn = get_db_connection()
+    bettors = conn.execute(f"""SELECT bettor, SUM(amount) as bet_sum
+                               FROM bets 
+                               WHERE horse = '{winner}' 
+                               GROUP BY bettor""").fetchall()
+
+    horse_total = conn.execute(f"""SELECT SUM(amount)
+                                   FROM bets 
+                                   WHERE horse = '{winner}' """).fetchall()[0][0]
+    conn.close()
+    total = total_handle()
+    payout_list = []
+    for bettor in bettors:
+        payout = total * (bettor["bet_sum"] / horse_total)
+        payout_list.append({"bettor":bettor["bettor"], "wagered":bettor["bet_sum"], "payout":payout})
+    return payout_list
+
 
 NAMES = [
     "Ryan",
     "Jen",
     "Dean",
-    "Mel",
+    "Mell",
     "Ross",
     "Jane",
     "Paul",
     "Jamie",
     "Hurry",
     "Craig",
-    "Erin",
+    "Danielle",
+    "Kalefe",
     "Kate Jones",
     "Al",
     "Kate Vidal",
@@ -106,15 +130,33 @@ def place_bet():
     if request.method == 'POST':
         bettor = request.form['name']
         horse = request.form['horse']
-        amount = int(request.form['amount'])
+        amount = int(request.form['bet_amount'])
         save_bet(bettor, horse, amount)
         update_odds()
     return render_template('place-bet.html', names=NAMES, horses=HORSES, odds=odds)
 
 @app.route('/view', methods=['GET', 'POST'])
 def view_bets():
-    bets = load_bets()
-    return render_template('bets.html', bets=bets)
+    selected_name = None
+    bets = None
+    if request.method == 'POST':
+        # Get the selected name from the form data
+        selected_name = request.form['name']
+
+        # Query the database for all bets made by the selected person
+        bets = load_bets(selected_name)
+    return render_template('bets.html', bets=bets, names=NAMES, selected_name=selected_name)
+
+@app.route('/payouts', methods=['GET', 'POST'])
+def payouts():
+    winner = None
+    payouts = None
+    if request.method == 'POST':
+        # Get the winner from the form data
+        winner = request.form['winner']
+        # Query the database payouts
+        payouts = calc_payouts(winner)
+    return render_template('payouts.html', horses=HORSES, winner=winner, payouts=payouts)
 
 if __name__ == '__main__':
     app.run(debug=True)

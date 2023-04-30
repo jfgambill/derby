@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1>Payouts</h1>
+    <form method="POST">
+        <div class="form-group">
+            <label for="winner">Select a Winning Horse:</label>
+            <select class="form-control" id="winner" name="winner">
+                {% for horse in horses %}
+                    <option value="{{ horse['horse'] }}">{{ horse['horse'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    {% if payouts %}
+        <h2>If Winner is {{ winner }}</h2>
+        <table class="table table-striped table-bordered table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Bettor</th>
+                    <th>Wagered</th>
+                    <th>Payout</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payout in payouts %}
+                    <tr>
+                        <td>{{ payout.bettor }}</td>
+                        <td>{{ payout.wagered }}</td>
+                        <td>{{ payout.payout }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

@@ -18,6 +18,6 @@ CREATE TABLE horses (
 DROP TABLE IF EXISTS odds;
 
 CREATE TABLE odds (
-    horse TEXT NOT NULL,
+    horse TEXT PRIMARY KEY NOT NULL,
     odds FLOAT NOT NULL
 );
