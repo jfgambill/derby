@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+        <title>Delete Bet</title>
+    </head>
+    <body>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="alert alert-success">
+                {% for message in messages %}
+                {{ message }}
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="container">
+            <h1>Delete Bet</h1>
+            <form method="POST">
+                <div class="form-group">
+                    <label for="bet_id">Bet ID to delete:</label>
+                    <input type="number" class="form-control" id="bet_id" name="bet_id" required>
+                </div>
+                <button type="submit" class="btn btn-danger">Delete Bet</button>
+            </form>
+            <br>
+            <h2>All Bets</h2>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Created</th>
+                        <th>Bettor</th>
+                        <th>Horse</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bet in bets %}
+                    <tr>
+                        <td>{{ bet.id }}</td>
+                        <td>{{ bet.created }}</td>
+                        <td>{{ bet.bettor }}</td>
+                        <td>{{ bet.horse }}</td>
+                        <td>{{ bet.amount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </body>
+
+{% endblock %}

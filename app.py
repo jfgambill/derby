@@ -1,9 +1,9 @@
-from flask import Flask, request, render_template
-from sqlalchemy import create_engine
-import pandas as pd
+from flask import Flask, request, render_template, flash
 import sqlite3
+import secrets
 
 app = Flask(__name__)
+app.secret_key = secrets.token_hex(16)
 
 def get_db_connection():
     conn = sqlite3.connect('database.db')
@@ -55,10 +55,11 @@ def load_horses():
 
 def load_bets(person=None):
     conn = get_db_connection()
-    if person is not None:
-        bets = conn.execute(f"SELECT * FROM bets WHERE bettor = '{person}'").fetchall()
+    if (person == "ALL") or (person is None):
+        bets = conn.execute('SELECT * FROM bets ORDER BY bettor, created').fetchall()
     else:
-        bets = conn.execute('SELECT * FROM bets').fetchall()
+        bets = conn.execute(f"SELECT * FROM bets WHERE bettor = '{person}'").fetchall()
+
     conn.close()
     return bets
 
@@ -70,16 +71,22 @@ def save_bet(bettor, horse, amount):
     conn.commit()
     conn.close()
 
+def delete_bet_id(bet_id):
+    conn = get_db_connection()
+    conn.execute(f"DELETE FROM bets WHERE id = '{bet_id}'")
+    conn.commit()
+    conn.close()
+
 def calc_payouts(winner):
     conn = get_db_connection()
     bettors = conn.execute(f"""SELECT bettor, SUM(amount) as bet_sum
                                FROM bets 
-                               WHERE horse = '{winner}' 
+                               WHERE horse = "{winner}"
                                GROUP BY bettor""").fetchall()
 
     horse_total = conn.execute(f"""SELECT SUM(amount)
                                    FROM bets 
-                                   WHERE horse = '{winner}' """).fetchall()[0][0]
+                                   WHERE horse = "{winner}" """).fetchall()[0][0]
     conn.close()
     total = total_handle()
     payout_list = []
@@ -87,7 +94,6 @@ def calc_payouts(winner):
         payout = total * (bettor["bet_sum"] / horse_total)
         payout_list.append({"bettor":bettor["bettor"], "wagered":bettor["bet_sum"], "payout":payout})
     return payout_list
-
 
 NAMES = [
     "Ryan",
@@ -101,6 +107,7 @@ NAMES = [
     "Hurry",
     "Craig",
     "Danielle",
+    "Iesha",
     "Kalefe",
     "Kate Jones",
     "Al",
@@ -116,6 +123,7 @@ NAMES = [
 ]
 NAMES = sorted(NAMES)
 HORSES = load_horses()
+bet_stop = False
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -133,19 +141,22 @@ def place_bet():
         amount = int(request.form['bet_amount'])
         save_bet(bettor, horse, amount)
         update_odds()
-    return render_template('place-bet.html', names=NAMES, horses=HORSES, odds=odds)
+    return render_template('place-bet.html', names=NAMES, horses=HORSES, odds=odds, bet_stop=bet_stop)
 
 @app.route('/view', methods=['GET', 'POST'])
 def view_bets():
     selected_name = None
     bets = None
+    total_bet = 0
     if request.method == 'POST':
         # Get the selected name from the form data
         selected_name = request.form['name']
 
         # Query the database for all bets made by the selected person
         bets = load_bets(selected_name)
-    return render_template('bets.html', bets=bets, names=NAMES, selected_name=selected_name)
+        total_bet = sum(bet['amount'] for bet in bets)  # Calculate the total bet amount for the selected bettor
+
+    return render_template('bets.html', bets=bets, names=["ALL"] + NAMES, selected_name=selected_name, total_bet=total_bet)
 
 @app.route('/payouts', methods=['GET', 'POST'])
 def payouts():
@@ -158,5 +169,21 @@ def payouts():
         payouts = calc_payouts(winner)
     return render_template('payouts.html', horses=HORSES, winner=winner, payouts=payouts)
 
+@app.route('/delete', methods=['GET', 'POST'])
+def delete_bet():
+    id_to_delete = None
+    bets = load_bets()
+    if request.method == 'POST':
+        # Get the selected name from the form data
+        id_to_delete = request.form['bet_id']
+
+        delete_bet_id(id_to_delete)
+        # Show confirmation message
+        flash(f"Success! Bet id {id_to_delete} has been deleted.")
+
+    return render_template('delete.html', bets=bets, id_to_delete=id_to_delete)
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    # ip addr is 192.168.50.142
+    app.run(host="0.0.0.0", port=5000)
